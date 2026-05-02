@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { createServerActionClient } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 
 interface AuthResponse {
   error?: string;
@@ -13,7 +13,7 @@ export async function login(formData: FormData): Promise<AuthResponse> {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const cookieStore = cookies()
-  const supabase = createServerActionClient({ cookies: () => cookieStore })
+  const supabase = createServerClient({ cookies: () => cookieStore })
 
   const { error } = await supabase.auth.signInWithPassword({
     email,
@@ -31,7 +31,7 @@ export async function signup(formData: FormData): Promise<AuthResponse> {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const cookieStore = cookies()
-  const supabase = createServerActionClient({ cookies: () => cookieStore })
+  const supabase = createServerClient({ cookies: () => cookieStore })
 
   const { error } = await supabase.auth.signUp({
     email,
