@@ -319,7 +319,7 @@ export default function TaskManager() {
     }, 4000);
   };
 
-  const addTaskByText = async (content: string) => {
+  const addTaskByText = async (content: string, due_date?: string, description?: string) => {
     if (!content.trim() || isAdding) return;
     setIsAdding(true);
     const tempId = Date.now();
@@ -331,6 +331,8 @@ export default function TaskManager() {
       status: 'todo',
       category: 'Processing...',
       priority: undefined,
+      due_date,
+      description,
       is_archived: false
     };
     setTasks(prev => [optimisticTask, ...prev]);
@@ -339,7 +341,11 @@ export default function TaskManager() {
       const response = await fetch('/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ 
+          content, 
+          due_date: due_date || null, 
+          description: description || null 
+        }),
       });
       
       const data = await response.json();
@@ -364,8 +370,14 @@ export default function TaskManager() {
     e.preventDefault();
     if (!newTaskContent.trim() || isAdding) return;
     const content = newTaskContent;
+    const dueDate = newTaskDueDate;
+    const description = newTaskDescription;
+    
     setNewTaskContent('');
-    await addTaskByText(content);
+    setNewTaskDueDate('');
+    setNewTaskDescription('');
+    
+    await addTaskByText(content, dueDate, description);
   };
 
   const handleDeleteTask = async (id: number) => {

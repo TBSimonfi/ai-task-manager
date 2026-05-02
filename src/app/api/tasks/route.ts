@@ -2,8 +2,10 @@ import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = await createClient()
+  const { searchParams } = new URL(request.url);
+  const includeArchived = searchParams.get('includeArchived') === 'true';
 
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
@@ -15,7 +17,7 @@ export async function GET() {
     .from('tasks')
     .select('*')
     .eq('user_id', userId)
-    .eq('is_archived', false)
+    .eq('is_archived', includeArchived)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -43,18 +45,26 @@ export async function POST(request: Request) {
   // Step 1: Create the initial task
   const { data: initialTask, error: createError } = await supabase
     .from('tasks')
-    .insert([{ content, user_id: userId, due_date, description }])
+    .insert([{ 
+      content, 
+      user_id: userId, 
+      due_date: due_date || null, 
+      description: description || null 
+    }])
     .select()
     .single();
 
   if (createError) {
+    console.error('Error creating task:', createError);
     return NextResponse.json({ error: 'Could not create task' }, { status: 500 });
   }
 
   // Step 2: Use AI to categorize, prioritize, estimate and tag
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    const genAI = new GoogleGenerativeAI(apiKey!);
+    if (!apiKey) throw new Error('GEMINI_API_KEY is missing');
+    
+    const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const prompt = `Analyze this task: "${content}". 
@@ -77,11 +87,13 @@ export async function POST(request: Request) {
     const { category, priority, estimated_hours, tags } = JSON.parse(jsonString);
 
     // Step 3: Update the task with AI data
+    const finalPriority = Math.max(1, Math.min(5, priority || 3));
+
     const { data: finalTask, error: updateError } = await supabase
       .from('tasks')
       .update({ 
         category: category || 'General', 
-        priority: priority || 3,
+        priority: finalPriority,
         estimated_hours: estimated_hours || 1,
         tags: tags || []
       })
