@@ -341,13 +341,19 @@ export default function TaskManager() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),
       });
+      
       const data = await response.json();
+      
+      if (!response.ok || !data.task) {
+        throw new Error(data.error || 'Failed to add task');
+      }
+
       setTasks(prev => prev.map(task => (task.id === tempId ? data.task : task)));
       gainXp(20);
-      logActivity('created', `Added task: ${content}`, data.task?.id);
+      logActivity('created', `Added task: ${content}`, data.task.id);
       showToast(t('addTask') + ' success');
-    } catch {
-      showToast('Failed to add task', 'error');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to add task', 'error');
       setTasks(prev => prev.filter(task => task.id !== tempId));
     } finally {
       setIsAdding(false);
@@ -516,6 +522,11 @@ export default function TaskManager() {
       if (!response.ok) throw new Error('Failed to update status');
 
       const data = await response.json();
+      
+      if (!response.ok || !data.task) {
+        throw new Error(data.error || 'Failed to update task');
+      }
+
       setTasks(prevTasks =>
         prevTasks.map(t => (t.id === task.id ? data.task : t))
       );
