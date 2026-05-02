@@ -21,9 +21,6 @@ export default function BadgeDisplay() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'badge', payload: { actionName: 'task_completion' } })
       });
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ activities: acts })
-      });
       const data = await res.json();
       
       if (data.badge) {
