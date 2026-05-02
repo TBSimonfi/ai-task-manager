@@ -22,7 +22,7 @@ export async function login(formData: FormData): Promise<AuthResponse> {
     return { error: error.message }
   }
 
-  redirect('/dashboard')
+  redirect('/')
 }
 
 export async function signup(formData: FormData): Promise<AuthResponse> {
@@ -45,5 +45,5 @@ export async function signup(formData: FormData): Promise<AuthResponse> {
   // After successful signup, Supabase typically sends a confirmation email.
   // The user will be redirected to /dashboard after confirming their email,
   // or they might be directly signed in depending on Supabase settings.
-  redirect('/dashboard')
+  redirect('/')
 }
